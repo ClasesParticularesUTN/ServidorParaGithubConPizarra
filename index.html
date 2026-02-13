@@ -1232,7 +1232,18 @@
 </div>
 <script src="/URLS.js"></script>
   <script>
-    console.log("Probando nueva implementacion: ", URLS);
+      if (typeof URLS !== 'undefined') {
+        console.log("Probando nueva implementacion: ", URLS);
+      }
+      // Proxy global para `conectarUsuario` — evita ReferenceError si se llama antes de estar definida
+      if (typeof window.conectarUsuario === 'undefined') {
+        window.conectarUsuario = function() {
+          if (typeof conectarUsuario === 'function') {
+            return conectarUsuario.apply(this, arguments);
+          }
+          console.warn('conectarUsuario llamado antes de la inicialización');
+        };
+      }
     // Variables globales Socket.io
     let socket = null;
     let miUsuario = null;
@@ -5490,7 +5501,6 @@ document.addEventListener("keydown", function(e) {
         },
         hintOptions: { hint: cppHint }
         });
-          });
         } catch (err) {
           console.error('Error inicializando CodeMirror (pestaña):', err);
         }

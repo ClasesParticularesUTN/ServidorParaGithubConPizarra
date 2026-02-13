@@ -1125,7 +1125,7 @@
   </div>
     </div>
 
-        <textarea class="editor-textarea" data-tab-id=""></textarea>
+        <textarea id="editor" class="editor-textarea" data-tab-id=""></textarea>
         <textarea class="input-area" data-tab-id="" placeholder="Escribí la entrada estándar aquí..."></textarea>
 
         <!-- Menú de autocompletado personalizado -->
@@ -1232,7 +1232,18 @@
 </div>
 <script src="/URLS.js"></script>
   <script>
-    console.log("Probando nueva implementacion: ", URLS);
+      if (typeof URLS !== 'undefined') {
+        console.log("Probando nueva implementacion: ", URLS);
+      }
+      // Proxy global para `conectarUsuario` — evita ReferenceError si se llama antes de estar definida
+      if (typeof window.conectarUsuario === 'undefined') {
+        window.conectarUsuario = function() {
+          if (typeof conectarUsuario === 'function') {
+            return conectarUsuario.apply(this, arguments);
+          }
+          console.warn('conectarUsuario llamado antes de la inicialización');
+        };
+      }
     // Variables globales Socket.io
     let socket = null;
     let miUsuario = null;
@@ -2434,18 +2445,22 @@ function obtenerPlantillaActual() {
 
 
       // Personalizamos el resaltado de ocurrencias para palabras completas
-      //editorInstance.setOption("highlightSelectionMatches", {showToken: /\w/, annotateScrollbar: true, wordsOnly: true});
-      editorInstance.setSize("100%", "100%");
+      if (editorInstance) {
+        //editorInstance.setOption("highlightSelectionMatches", {showToken: /\w/, annotateScrollbar: true, wordsOnly: true});
+        editorInstance.setSize("100%", "100%");
 
-     // Restaurar texto si fue guardado hace menos de una hora
-// Solo restaurar si no hay conexión activa (modo multiusuario)
-if (editorText && dentroDeUnaHora && !socket) {
-  editorInstance.setValue(editorText);
-  editorIniciado = true;
-  console.log("paso menos de una hora , coloco el codigo");
-}else{
-  console.log("paso mas de una hora o modo multiusuario activo", dentroDeUnaHora);
-}
+        // Restaurar texto si fue guardado hace menos de una hora
+        // Solo restaurar si no hay conexión activa (modo multiusuario)
+        if (editorText && dentroDeUnaHora && !socket) {
+          editorInstance.setValue(editorText);
+          editorIniciado = true;
+          console.log("paso menos de una hora , coloco el codigo");
+        }else{
+          console.log("paso mas de una hora o modo multiusuario activo", dentroDeUnaHora);
+        }
+      } else {
+        console.warn('editorInstance no está disponible para setSizeey/setValue');
+      }
 
 // Si el editor estaba abierto, lo abrimos (sin restricción de tiempo)
 // Solo si no hay socket (modo sin multiusuario)
@@ -5490,7 +5505,6 @@ document.addEventListener("keydown", function(e) {
         },
         hintOptions: { hint: cppHint }
         });
-          });
         } catch (err) {
           console.error('Error inicializando CodeMirror (pestaña):', err);
         }
@@ -5984,6 +5998,8 @@ document.addEventListener("keydown", function(e) {
     }
     
     function actualizarListaUsuarios(usuarios) {
+      // Exposición global de la función
+      window.actualizarListaUsuarios = actualizarListaUsuarios;
       const lista = document.getElementById('lista-usuarios');
       lista.innerHTML = '';
       
@@ -6516,6 +6532,8 @@ document.addEventListener("keydown", function(e) {
 
     // Función para minimizar/maximizar el menú de usuarios
     function toggleMenuUsuarios() {
+      // Exposición global de la función
+      window.toggleMenuUsuarios = toggleMenuUsuarios;
       const menu = document.getElementById('usuarios-conectados');
       const btn = document.getElementById('minimizar-usuarios-btn');
       

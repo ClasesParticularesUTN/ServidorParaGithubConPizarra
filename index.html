@@ -2357,7 +2357,8 @@ function obtenerPlantillaActual() {
 
       const _editorTextarea = document.getElementById("editor");
       if (_editorTextarea) {
-        editorInstance = CodeMirror.fromTextArea(_editorTextarea, {
+        try {
+          editorInstance = CodeMirror.fromTextArea(_editorTextarea, {
         mode: "text/x-c++src",
         theme: "material",
         lineNumbers: true,
@@ -2422,7 +2423,10 @@ function obtenerPlantillaActual() {
         hintOptions: {
           hint: cppHint
         }
-      });
+          });
+        } catch (err) {
+          console.error('Error inicializando CodeMirror (editorInstance):', err);
+        }
       } else {
         console.warn('Textarea with id "editor" not found — skipping CodeMirror initialization (editorInstance)');
       }
@@ -5437,8 +5441,9 @@ document.addEventListener("keydown", function(e) {
         };
       }
 
-      if (textarea) {
-        const editor = CodeMirror.fromTextArea(textarea, {
+      if (typeof textarea !== 'undefined' && textarea) {
+        try {
+          const editor = CodeMirror.fromTextArea(textarea, {
         mode: "text/x-c++src",
         theme: "material",
         lineNumbers: true,
@@ -5484,8 +5489,12 @@ document.addEventListener("keydown", function(e) {
         },
         hintOptions: { hint: cppHint }
         });
+          });
+        } catch (err) {
+          console.error('Error inicializando CodeMirror (pestaña):', err);
+        }
       } else {
-        console.warn('Textarea variable `textarea` is null — skipping this CodeMirror instance');
+        console.warn('Textarea variable `textarea` is null or undefined — skipping this CodeMirror instance');
       }
 
       // Asegurarse de que el editor tenga altura

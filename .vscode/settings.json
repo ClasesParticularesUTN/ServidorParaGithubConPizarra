@@ -7,6 +7,14 @@
         "/^node tools/analyze_script28\\.js$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^sudo lsof -i :4000 -sTCP:LISTEN -P -n$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^sudo kill 13417 \\|\\| sudo kill -9 13417$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

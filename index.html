@@ -4271,13 +4271,29 @@ document.addEventListener("keydown", function(e) {
 
         const toggleCursos = document.getElementById('toggle-cursos-remotos');
         if (toggleCursos && !toggleCursos.hasAttribute('data-listener-added')) {
-          toggleCursos.addEventListener('click', toggleCursosRemotos);
+          toggleCursos.addEventListener('click', () => {
+            if (typeof window.toggleCursosRemotos === 'function') {
+              window.toggleCursosRemotos();
+            } else if (typeof toggleCursosRemotos === 'function') {
+              toggleCursosRemotos();
+            } else {
+              console.warn('Intentaron usar toggleCursosRemotos pero no está definido aún');
+            }
+          });
           toggleCursos.setAttribute('data-listener-added', 'true');
         }
 
         const toggleColaboracion = document.getElementById('toggle-colaboracion');
         if (toggleColaboracion && !toggleColaboracion.hasAttribute('data-listener-added')) {
-          toggleColaboracion.addEventListener('click', toggleColaboracion);
+          toggleColaboracion.addEventListener('click', () => {
+            if (typeof window.toggleColaboracion === 'function') {
+              window.toggleColaboracion();
+            } else if (typeof toggleColaboracion === 'function') {
+              toggleColaboracion();
+            } else {
+              console.warn('Intentaron usar toggleColaboracion pero no está definido aún');
+            }
+          });
           toggleColaboracion.setAttribute('data-listener-added', 'true');
           // Sincronizar estado inicial
           if (permitirColaboracion) {
@@ -4734,10 +4750,38 @@ document.addEventListener("keydown", function(e) {
       socket.on('usuarios-actualizados', (usuarios) => {
         if (typeof window.actualizarListaUsuarios === 'function') {
           window.actualizarListaUsuarios(usuarios);
-        } else if (typeof actualizarListaUsuarios === 'function') {
+          return;
+        }
+        if (typeof actualizarListaUsuarios === 'function') {
           actualizarListaUsuarios(usuarios);
-        } else {
-          console.warn('usuarios-actualizados recibido pero actualizarListaUsuarios no está definida');
+          return;
+        }
+
+        // Si la función aún no está definida, encolamos los datos y esperamos hasta que esté disponible
+        if (!window._usuariosPendientes) window._usuariosPendientes = [];
+        window._usuariosPendientes.push(usuarios);
+
+        if (!window._usuariosPendientesInterval) {
+          let intentos = 0;
+          window._usuariosPendientesInterval = setInterval(() => {
+            intentos++;
+            if (typeof window.actualizarListaUsuarios === 'function') {
+              // Procesar todas las colas
+              while (window._usuariosPendientes && window._usuariosPendientes.length > 0) {
+                const u = window._usuariosPendientes.shift();
+                try { window.actualizarListaUsuarios(u); } catch(e) { console.error(e); }
+              }
+              clearInterval(window._usuariosPendientesInterval);
+              window._usuariosPendientesInterval = null;
+              return;
+            }
+            if (intentos > 50) { // ~10s con 200ms intervalo
+              console.warn('usuarios-actualizados recibido pero actualizarListaUsuarios no se definió en 10s, descartando pendientes');
+              window._usuariosPendientes = [];
+              clearInterval(window._usuariosPendientesInterval);
+              window._usuariosPendientesInterval = null;
+            }
+          }, 200);
         }
       });
 
